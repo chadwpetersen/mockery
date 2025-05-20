@@ -430,7 +430,7 @@ func (c PackageConfig) GetInterfaceConfig(ctx context.Context, interfaceName str
 	return ifaceConfig
 }
 
-func (c PackageConfig) ShouldGenerateInterface(ctx context.Context, interfaceName string) (bool, error) {
+func (c PackageConfig) ShouldGenerateInterface(ctx context.Context, interfaceName string, gen *ast.GenDecl) (bool, error) {
 	log := zerolog.Ctx(ctx)
 	if *c.Config.All {
 		if *c.Config.IncludeInterfaceRegex != "" {
@@ -439,11 +439,22 @@ func (c PackageConfig) ShouldGenerateInterface(ctx context.Context, interfaceNam
 		if *c.Config.ExcludeInterfaceRegex != "" {
 			log.Warn().Msg("interface config has both `all` and `exclude-interface-regex` set: `exclude-interface-regex` will be ignored")
 		}
+		if *c.Config.Annotation {
+			log.Warn().Msg("interface config has both `all` and `annotation` set: `annotation` will be ignored")
+		}
 		log.Debug().Msg("`all: true` is set, interface should be generated")
 		return true, nil
 	}
 
 	if _, exists := c.Interfaces[interfaceName]; exists {
+		return true, nil
+	}
+
+	if *c.Config.Annotation {
+		if !strings.Contains(gen.Doc.Text(), "@mockery:generate") {
+			log.Debug().Msg("interface does not have mockery annotation")
+			return false, nil
+		}
 		return true, nil
 	}
 
@@ -517,6 +528,7 @@ type Config struct {
 	ExcludeSubpkgRegex    []string       `koanf:"exclude-subpkg-regex" yaml:"exclude-subpkg-regex,omitempty"`
 	ExcludeInterfaceRegex *string        `koanf:"exclude-interface-regex" yaml:"exclude-interface-regex,omitempty"`
 	FileName              *string        `koanf:"filename" yaml:"filename,omitempty"`
+	Annotation            *bool          `koanf:"annotation" yaml:"annotation,omitempty"`
 	// ForceFileWrite controls whether mockery will overwrite existing files when generating mocks. This is by default set to false.
 	ForceFileWrite        *bool   `koanf:"force-file-write" yaml:"force-file-write,omitempty"`
 	Formatter             *string `koanf:"formatter" yaml:"formatter,omitempty"`
