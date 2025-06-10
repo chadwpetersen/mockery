@@ -74,8 +74,20 @@ func (_e *MockIfaceWithBuildTagInComment_Expecter) Sprintf(format interface{}, a
 
 func (_c *MockIfaceWithBuildTagInComment_Sprintf_Call) Run(run func(format string, a ...interface{})) *MockIfaceWithBuildTagInComment_Sprintf_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := args[1].([]interface{})
-		run(args[0].(string), variadicArgs...)
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 []interface{}
+		var variadicArgs []interface{}
+		if len(args) > 1 {
+			variadicArgs = args[1].([]interface{})
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
 	})
 	return _c
 }
